@@ -1,11 +1,35 @@
 #!/usr/bin/env python3
 """
 Generate indentation-based paths for structured files.
+
+It is quite often desired to be able quickly to visualize "path" to the given
+line.  For some languagues indentation is part of the syntax (e.g. Python), and
+for the most of the file formats have "pretty-printers" which use indentation
+to assist humans perceiving those files structure.
+
+Then this tool could help to visualize path to each line, or to a specific line
+identified via regex, or just by a line number.
+
+Examples from my pains of the past two days
+
+- Visualize where in the datacite XML schema we have "idenfifier"
+
+...
+
+- Visualize where in the Python code we have "indent"
+
+...
 """
 
 import argparse
 import sys
 import re
+import os
+
+try:
+    from termcolor import colored
+except ImportError as exc:
+    colored = None
 
 def get_paths(lines):
     """Generate indentation-based paths for given lines."""
@@ -24,12 +48,37 @@ def get_paths(lines):
         if stripped:
             key = stripped.split()[0].rstrip(':{')
             if key:
-                path_stack.append((key, indent))
+                path_stack.append((key, indent, i))
 
         # Build the path
-        paths.append((i, [p[0] for p in path_stack]))
+        paths.append((i, tuple(path_stack)))
 
     return paths
+
+def print_inline(paths, lines, use_color):
+    """Print paths and matched lines in inline format."""
+    for line_num, path in paths:
+        path_str = ".".join([p[0] for p in path[:-1]])
+        line = lines[line_num].rstrip()
+        if use_color:
+            path_str = colored(path_str, attrs=["dark"])
+            line = colored(line, "red")
+        print(f"{line_num}: {path_str} {line}")
+
+def print_full_lines(paths, lines, use_color):
+    """Print paths and matched lines in full-lines format."""
+    last_printed_path = []
+    printed = set()
+    for line_num, path in paths:
+        # in simplest case -- print all lines of the path
+        for key, indent, i in path[:-1]:
+            line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]
+            if i not in printed:
+                print(f"{i}: {line_colored})")
+                printed.add(i)
+        line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]
+        print(f"{line_num}: {line_colored}")
+        printed.add(line_num)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -46,11 +95,31 @@ def main():
         "-n", "--line-number", type=int, action="append",
         help="Specific line number(s) to print (can be used multiple times)"
     )
+    parser.add_argument(
+        "-f", "--format", choices=["inline", "full-lines"], default="inline",
+        help="Output format: 'inline' (default) or 'full-lines'"
+    )
+    parser.add_argument(
+        "--color", choices=["auto", "on", "off"], default="auto",
+        help="Color output: 'auto' (default), 'on', or 'off'"
+    )
 
     args = parser.parse_args()
 
+    # Determine if color output should be used
+    use_color = (
+        args.color == "on" or
+        (args.color == "auto" and sys.stdout.isatty() and colored)
+    )
+    if use_color and not colored:
+        raise RuntimeError("Need 'termcolor' package to get colors")
+
+    # Compile regex if provided
+    regex = re.compile(args.regex) if args.regex else None
+
     # Read lines from the file
     lines = args.file.readlines()
+    lines = [l.rstrip() for l in lines]
 
     # Get paths for all lines
     paths = get_paths(lines)
@@ -65,9 +134,14 @@ def main():
         line_numbers = set(args.line_number)
         paths = [(line_num, path) for line_num, path in paths if line_num in line_numbers]
 
-    # Print the results
-    for line_num, path in paths:
-        print(f"{line_num}: {'.'.join(path[:-1])} {lines[line_num].rstrip()}")
+
+    # Print based on the chosen format
+    if args.format == "inline":
+        print_inline(paths, lines, use_color)
+    elif args.format == "full-lines":
+        print_full_lines(paths, lines, use_color)
+    else:
+        raise ValueError(args.format)
 
 if __name__ == "__main__":
     main()
