@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""
+Generate indentation-based paths for structured files.
+"""
+
+import argparse
+import sys
+import re
+
+def get_paths(lines):
+    """Generate indentation-based paths for given lines."""
+    paths = []
+    path_stack = []
+
+    for i, line in enumerate(lines):
+        stripped = line.lstrip()
+        indent = len(line) - len(stripped)
+
+        # Adjust the stack based on indentation
+        while path_stack and path_stack[-1][1] >= indent:
+            path_stack.pop()
+
+        # Extract the "key" (first non-space word before :, {, etc.)
+        if stripped:
+            key = stripped.split()[0].rstrip(':{')
+            if key:
+                path_stack.append((key, indent))
+
+        # Build the path
+        paths.append((i, [p[0] for p in path_stack]))
+
+    return paths
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=__doc__
+    )
+    parser.add_argument(
+        "file", nargs="?", type=argparse.FileType("r"), default=sys.stdin,
+        help="Input file to process (default: stdin)"
+    )
+    parser.add_argument(
+        "-e", "--regex", type=str, help="Regular expression to match lines"
+    )
+    parser.add_argument(
+        "-n", "--line-number", type=int, action="append",
+        help="Specific line number(s) to print (can be used multiple times)"
+    )
+
+    args = parser.parse_args()
+
+    # Read lines from the file
+    lines = args.file.readlines()
+
+    # Get paths for all lines
+    paths = get_paths(lines)
+
+    # Filter by regex if provided
+    if args.regex:
+        regex = re.compile(args.regex)
+        paths = [(line_num, path) for line_num, path in paths if regex.search(lines[line_num])]
+
+    # Filter by line numbers if provided
+    if args.line_number:
+        line_numbers = set(args.line_number)
+        paths = [(line_num, path) for line_num, path in paths if line_num in line_numbers]
+
+    # Print the results
+    for line_num, path in paths:
+        print(f"{line_num}: {'.'.join(path[:-1])} {lines[line_num].rstrip()}")
+
+if __name__ == "__main__":
+    main()
