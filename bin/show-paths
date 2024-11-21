@@ -3,7 +3,7 @@
 Generate indentation-based paths for structured files.
 
 It is quite often desired to be able quickly to visualize "path" to the given
-line.  For some languagues indentation is part of the syntax (e.g. Python), and
+line.  For some languages indentation is part of the syntax (e.g. Python), and
 for the most of the file formats have "pretty-printers" which use indentation
 to assist humans perceiving those files structure.
 
