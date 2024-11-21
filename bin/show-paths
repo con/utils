@@ -38,60 +38,60 @@ Examples from my pains of the past two days
   needed to trigger coding!)
 
 
-	❯ dcmdump dcm_qa_xa30i/In/7001_func-bold_task-fa_run-1/7001001_1.3.12.2.1107.5.2.43.67093.30000023011319484937100000688.dcm | show-paths -e RepetitionTime
-	77:  (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
+    ❯ dcmdump dcm_qa_xa30i/In/7001_func-bold_task-fa_run-1/7001001_1.3.12.2.1107.5.2.43.67093.30000023011319484937100000688.dcm | show-paths -e RepetitionTime
+    77:  (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
 
-	❯ dcmdump dcm_qa_xa30/In/7_func-bold_task-fa_run-1/0001_1.3.12.2.1107.5.2.43.67093.2022071112090640678703211.dcm | show-paths -e RepetitionTime
-	467: (5200,9229).(fffe,e000).(0018,9112).(fffe,e000)         (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
+    ❯ dcmdump dcm_qa_xa30/In/7_func-bold_task-fa_run-1/0001_1.3.12.2.1107.5.2.43.67093.2022071112090640678703211.dcm | show-paths -e RepetitionTime
+    467: (5200,9229).(fffe,e000).(0018,9112).(fffe,e000)         (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
 
-	❯ dcmdump dcm_qa_xa30/In/7_func-bold_task-fa_run-1/0001_1.3.12.2.1107.5.2.43.67093.2022071112090640678703211.dcm | show-paths -f full-lines -e RepetitionTime
-	221  (5200,9229) SQ (Sequence with undefined length #=1)     # u/l, 1 SharedFunctionalGroupsSequence
-	222    (fffe,e000) na (Item with undefined length #=11)        # u/l, 1 Item
-	465      (0018,9112) SQ (Sequence with undefined length #=1)     # u/l, 1 MRTimingAndRelatedParametersSequence
-	466        (fffe,e000) na (Item with undefined length #=9)         # u/l, 1 Item
-	467:         (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
+    ❯ dcmdump dcm_qa_xa30/In/7_func-bold_task-fa_run-1/0001_1.3.12.2.1107.5.2.43.67093.2022071112090640678703211.dcm | show-paths -f full-lines -e RepetitionTime
+    221  (5200,9229) SQ (Sequence with undefined length #=1)     # u/l, 1 SharedFunctionalGroupsSequence
+    222    (fffe,e000) na (Item with undefined length #=11)        # u/l, 1 Item
+    465      (0018,9112) SQ (Sequence with undefined length #=1)     # u/l, 1 MRTimingAndRelatedParametersSequence
+    466        (fffe,e000) na (Item with undefined length #=9)         # u/l, 1 Item
+    467:         (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
 
  - In Python code (better visible in terminal with colors), e.g.
 
-	❯ show-paths -f full-lines -e '\bcolored\b' $(which show-paths)
-	57: 	29:     from termcolor import colored
-	59: 	31:     colored = None
-	63: 	63:             path_str = colored(path_str, attrs=["dark"])
-	64: 	64:             line = colored(line, "red")
-	68: 	74:             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]
-	69: 	78:         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]
-	71: 	111:         (args.color == "auto" and sys.stdout.isatty() and colored)
-	72: 	113:     if use_color and not colored:
-	81  try:
-	82:     from termcolor import colored
-	83  except ImportError as exc:
-	84:     colored = None
-	110  def print_inline(paths, lines, use_color):
-	112      for line_num, path in paths:
-	115          if use_color:
-	116:             path_str = colored(path_str, attrs=["dark"])
-	117:             line = colored(line, "red")
-	120  def print_full_lines(paths, lines, use_color):
-	124      for line_num, path in paths:
-	126          for key, indent, i in path[:-1]:
-	127:             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]
-	131:         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]
-	162      use_color = (
-	164:         (args.color == "auto" and sys.stdout.isatty() and colored)
-	166:     if use_color and not colored:
+    ❯ show-paths -f full-lines -e '\bcolored\b' $(which show-paths)
+    57:     29:     from termcolor import colored
+    59:     31:     colored = None
+    63:     63:             path_str = colored(path_str, attrs=["dark"])
+    64:     64:             line = colored(line, "red")
+    68:     74:             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]
+    69:     78:         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]
+    71:     111:         (args.color == "auto" and sys.stdout.isatty() and colored)
+    72:     113:     if use_color and not colored:
+    81  try:
+    82:     from termcolor import colored
+    83  except ImportError as exc:
+    84:     colored = None
+    110  def print_inline(paths, lines, use_color):
+    112      for line_num, path in paths:
+    115          if use_color:
+    116:             path_str = colored(path_str, attrs=["dark"])
+    117:             line = colored(line, "red")
+    120  def print_full_lines(paths, lines, use_color):
+    124      for line_num, path in paths:
+    126          for key, indent, i in path[:-1]:
+    127:             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]
+    131:         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]
+    162      use_color = (
+    164:         (args.color == "auto" and sys.stdout.isatty() and colored)
+    166:     if use_color and not colored:
 
 
-"""
+"""  # noqa: E501
 
 import argparse
-import sys
 import re
-import os
+import sys
 
 try:
     from termcolor import colored
-except ImportError as exc:
+except ImportError:
     colored = None
+
 
 def get_paths(lines):
     """Generate indentation-based paths for given lines."""
@@ -108,7 +108,7 @@ def get_paths(lines):
 
         # Extract the "key" (first non-space word before :, {, etc.)
         if stripped:
-            key = stripped.split()[0].rstrip(':{')
+            key = stripped.split()[0].rstrip(":{")
             if key:
                 path_stack.append((key, indent, i))
 
@@ -116,6 +116,7 @@ def get_paths(lines):
         paths.append((i, tuple(path_stack)))
 
     return paths
+
 
 def print_inline(paths, lines, use_color):
     """Print paths and matched lines in inline format."""
@@ -127,9 +128,9 @@ def print_inline(paths, lines, use_color):
             line = colored(line, "red")
         print(f"{line_num}: {path_str} {line}")
 
+
 def print_full_lines(paths, lines, use_color):
     """Print paths and matched lines in full-lines format."""
-    last_printed_path = []
     printed = set()
     for line_num, path in paths:
         # in simplest case -- print all lines of the path
@@ -142,36 +143,45 @@ def print_full_lines(paths, lines, use_color):
         print(f"{line_num}: {line_colored}")
         printed.add(line_num)
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description=__doc__
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "file", nargs="?", type=argparse.FileType("r"), default=sys.stdin,
-        help="Input file to process (default: stdin)"
+        "file",
+        nargs="?",
+        type=argparse.FileType("r"),
+        default=sys.stdin,
+        help="Input file to process (default: stdin)",
     )
     parser.add_argument(
         "-e", "--regex", type=str, help="Regular expression to match lines"
     )
     parser.add_argument(
-        "-n", "--line-number", type=int, action="append",
-        help="Specific line number(s) to print (can be used multiple times)"
+        "-n",
+        "--line-number",
+        type=int,
+        action="append",
+        help="Specific line number(s) to print (can be used multiple times)",
     )
     parser.add_argument(
-        "-f", "--format", choices=["inline", "full-lines"], default="inline",
-        help="Output format: 'inline' (default) or 'full-lines'"
+        "-f",
+        "--format",
+        choices=["inline", "full-lines"],
+        default="inline",
+        help="Output format: 'inline' (default) or 'full-lines'",
     )
     parser.add_argument(
-        "--color", choices=["auto", "on", "off"], default="auto",
-        help="Color output: 'auto' (default), 'on', or 'off'"
+        "--color",
+        choices=["auto", "on", "off"],
+        default="auto",
+        help="Color output: 'auto' (default), 'on', or 'off'",
     )
 
     args = parser.parse_args()
 
     # Determine if color output should be used
-    use_color = (
-        args.color == "on" or
-        (args.color == "auto" and sys.stdout.isatty() and colored)
+    use_color = args.color == "on" or (
+        args.color == "auto" and sys.stdout.isatty() and colored
     )
     if use_color and not colored:
         raise RuntimeError("Need 'termcolor' package to get colors")
@@ -181,7 +191,7 @@ def main():
 
     # Read lines from the file
     lines = args.file.readlines()
-    lines = [l.rstrip() for l in lines]
+    lines = [line.rstrip() for line in lines]
 
     # Get paths for all lines
     paths = get_paths(lines)
@@ -189,13 +199,18 @@ def main():
     # Filter by regex if provided
     if args.regex:
         regex = re.compile(args.regex)
-        paths = [(line_num, path) for line_num, path in paths if regex.search(lines[line_num])]
+        paths = [
+            (line_num, path)
+            for line_num, path in paths
+            if regex.search(lines[line_num])
+        ]
 
     # Filter by line numbers if provided
     if args.line_number:
         line_numbers = set(args.line_number)
-        paths = [(line_num, path) for line_num, path in paths if line_num in line_numbers]
-
+        paths = [
+            (line_num, path) for line_num, path in paths if line_num in line_numbers
+        ]
 
     # Print based on the chosen format
     if args.format == "inline":
@@ -204,6 +219,7 @@ def main():
         print_full_lines(paths, lines, use_color)
     else:
         raise ValueError(args.format)
+
 
 if __name__ == "__main__":
     main()
