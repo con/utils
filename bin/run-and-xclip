@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# A little helper to run a command and "cut" its output to X clipboard
+# to be pasted into github issue within <details>
+#
+
+cmd=( "$@" )
+
+(
+    echo "<details><summary>$@</summary>"
+    echo
+    echo '```'
+    "$@"
+    echo '```'
+    echo
+    echo "</details>"
+) 2>&1 | xclip -i
+nlines=$(xclip -o | wc -l)
+echo "I: copied $nlines into clipboard"
+
+if [ "$nlines" -lt 10 ]; then
+    echo "D: full output"
+    xclip -o
+fi
