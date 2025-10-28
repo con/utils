@@ -216,6 +216,21 @@ def test_show_paths_help_output():
 
 
 @pytest.mark.ai_generated
+def test_show_paths_help_colors_stripped_without_tty():
+    """Test that ANSI color codes are stripped from --help when not a TTY."""
+    result = run_show_paths("--help")
+    assert result.returncode == 0
+    help_output = result.stdout
+
+    # Since we're running in subprocess (no TTY), ANSI codes should be stripped
+    assert "\x1b[" not in help_output, "ANSI color codes should be stripped from help without TTY"
+
+    # But the content should still be there
+    assert "RepetitionTime" in help_output or "relatedIdentifier" in help_output
+    assert "Examples" in help_output
+
+
+@pytest.mark.ai_generated
 def test_show_paths_no_matches():
     """Test show-paths when regex doesn't match anything."""
     result = run_show_paths(

@@ -16,22 +16,22 @@ Examples from my pains of the past two days
   defined
 
     ❯ ~/bin/show-paths -f full-lines -e 'name="relatedIdentifier"' metadata.xsd
-    16  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://datacite.org/schema/kernel-4" targetNamespace="http://datacite.org/schema/kernel-4" elementFormDefault="qualified" xml:lang="EN">
-    28    <xs:element name="resource">
-    35      <xs:complexType>
-    36        <xs:all>
-    236:         <xs:element name="relatedIdentifiers" minOccurs="0">
-    237            <xs:complexType>
-    238              <xs:sequence>
-    239:               <xs:element name="relatedIdentifier" minOccurs="0" maxOccurs="unbounded">
+    \x1b[2m16  <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://datacite.org/schema/kernel-4" targetNamespace="http://datacite.org/schema/kernel-4" elementFormDefault="qualified" xml:lang="EN">\x1b[0m
+    \x1b[2m28    <xs:element name="resource">\x1b[0m
+    \x1b[2m35      <xs:complexType>\x1b[0m
+    \x1b[2m36        <xs:all>\x1b[0m
+    \x1b[31m236:         <xs:element name="relatedIdentifiers" minOccurs="0">\x1b[0m
+    \x1b[2m237            <xs:complexType>\x1b[0m
+    \x1b[2m238              <xs:sequence>\x1b[0m
+    \x1b[31m239:               <xs:element name="relatedIdentifier" minOccurs="0" maxOccurs="unbounded">\x1b[0m
 
     ❯ ~/bin/show-paths -f full-lines -e '\brelatedIdentifier\b' ~/proj/datacite/inveniosoftware-datacite/datacite/schemas/datacite-v4.5.json
-    304      "properties": {
-    419          "relatedIdentifiers": {
-    421              "items": {
-    425                  "properties": {
-    426:                     "relatedIdentifier": {"type": "string"},
-    429:                 "required": ["relatedIdentifier", "relatedIdentifierType", "relationType"],
+    \x1b[2m304      "properties": {\x1b[0m
+    \x1b[2m419          "relatedIdentifiers": {\x1b[0m
+    \x1b[2m421              "items": {\x1b[0m
+    \x1b[2m425                  "properties": {\x1b[0m
+    \x1b[31m426:                     "relatedIdentifier": {"type": "string"},\x1b[0m
+    \x1b[31m429:                 "required": ["relatedIdentifier", "relatedIdentifierType", "relationType"],\x1b[0m
 
 - Dig out where enhanced DICOM contains RepetitionTime in contrast to regular
   or interoperable one (this was the drop which overfilled the cup and
@@ -39,46 +39,46 @@ Examples from my pains of the past two days
 
 
     ❯ dcmdump dcm_qa_xa30i/In/7001_func-bold_task-fa_run-1/7001001_1.3.12.2.1107.5.2.43.67093.30000023011319484937100000688.dcm | show-paths -e RepetitionTime
-    77:  (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
+    \x1b[31m77:  (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime\x1b[0m
 
     ❯ dcmdump dcm_qa_xa30/In/7_func-bold_task-fa_run-1/0001_1.3.12.2.1107.5.2.43.67093.2022071112090640678703211.dcm | show-paths -e RepetitionTime
-    467: (5200,9229).(fffe,e000).(0018,9112).(fffe,e000)         (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
+    \x1b[2m467: (5200,9229).(fffe,e000).(0018,9112).(fffe,e000)\x1b[0m         \x1b[31m(0018,0080) DS [1000]                                   #   4, 1 RepetitionTime\x1b[0m
 
     ❯ dcmdump dcm_qa_xa30/In/7_func-bold_task-fa_run-1/0001_1.3.12.2.1107.5.2.43.67093.2022071112090640678703211.dcm | show-paths -f full-lines -e RepetitionTime
-    221  (5200,9229) SQ (Sequence with undefined length #=1)     # u/l, 1 SharedFunctionalGroupsSequence
-    222    (fffe,e000) na (Item with undefined length #=11)        # u/l, 1 Item
-    465      (0018,9112) SQ (Sequence with undefined length #=1)     # u/l, 1 MRTimingAndRelatedParametersSequence
-    466        (fffe,e000) na (Item with undefined length #=9)         # u/l, 1 Item
-    467:         (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime
+    \x1b[2m221  (5200,9229) SQ (Sequence with undefined length #=1)     # u/l, 1 SharedFunctionalGroupsSequence\x1b[0m
+    \x1b[2m222    (fffe,e000) na (Item with undefined length #=11)        # u/l, 1 Item\x1b[0m
+    \x1b[2m465      (0018,9112) SQ (Sequence with undefined length #=1)     # u/l, 1 MRTimingAndRelatedParametersSequence\x1b[0m
+    \x1b[2m466        (fffe,e000) na (Item with undefined length #=9)         # u/l, 1 Item\x1b[0m
+    \x1b[31m467:         (0018,0080) DS [1000]                                   #   4, 1 RepetitionTime\x1b[0m
 
  - In Python code (better visible in terminal with colors), e.g.
 
     ❯ show-paths -f full-lines -e '\bcolored\b' $(which show-paths)
-    57:     29:     from termcolor import colored
-    59:     31:     colored = None
-    63:     63:             path_str = colored(path_str, attrs=["dark"])
-    64:     64:             line = colored(line, "red")
-    68:     74:             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]
-    69:     78:         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]
-    71:     111:         (args.color == "auto" and sys.stdout.isatty() and colored)
-    72:     113:     if use_color and not colored:
-    81  try:
-    82:     from termcolor import colored
-    83  except ImportError as exc:
-    84:     colored = None
-    110  def print_inline(paths, lines, use_color):
-    112      for line_num, path in paths:
-    115          if use_color:
-    116:             path_str = colored(path_str, attrs=["dark"])
-    117:             line = colored(line, "red")
-    120  def print_full_lines(paths, lines, use_color):
-    124      for line_num, path in paths:
-    126          for key, indent, i in path[:-1]:
-    127:             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]
-    131:         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]
-    162      use_color = (
-    164:         (args.color == "auto" and sys.stdout.isatty() and colored)
-    166:     if use_color and not colored:
+    \x1b[31m57:     29:     from termcolor import colored\x1b[0m
+    \x1b[31m59:     31:     colored = None\x1b[0m
+    \x1b[31m63:     63:             path_str = colored(path_str, attrs=["dark"])\x1b[0m
+    \x1b[31m64:     64:             line = colored(line, "red")\x1b[0m
+    \x1b[31m68:     74:             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]\x1b[0m
+    \x1b[31m69:     78:         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]\x1b[0m
+    \x1b[31m71:     111:         (args.color == "auto" and sys.stdout.isatty() and colored)\x1b[0m
+    \x1b[31m72:     113:     if use_color and not colored:\x1b[0m
+    \x1b[2m81  try:\x1b[0m
+    \x1b[31m82:     from termcolor import colored\x1b[0m
+    \x1b[2m83  except ImportError as exc:\x1b[0m
+    \x1b[31m84:     colored = None\x1b[0m
+    \x1b[2m110  def print_inline(paths, lines, use_color):\x1b[0m
+    \x1b[2m112      for line_num, path in paths:\x1b[0m
+    \x1b[2m115          if use_color:\x1b[0m
+    \x1b[31m116:             path_str = colored(path_str, attrs=["dark"])\x1b[0m
+    \x1b[31m117:             line = colored(line, "red")\x1b[0m
+    \x1b[2m120  def print_full_lines(paths, lines, use_color):\x1b[0m
+    \x1b[2m124      for line_num, path in paths:\x1b[0m
+    \x1b[2m126          for key, indent, i in path[:-1]:\x1b[0m
+    \x1b[31m127:             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]\x1b[0m
+    \x1b[31m131:         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]\x1b[0m
+    \x1b[2m162      use_color = (\x1b[0m
+    \x1b[31m164:         (args.color == "auto" and sys.stdout.isatty() and colored)\x1b[0m
+    \x1b[31m166:     if use_color and not colored:\x1b[0m
 
 
 """  # noqa: E501
@@ -91,6 +91,24 @@ try:
     from termcolor import colored
 except ImportError:
     colored = None
+
+
+class ColoredHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """Formatter that strips ANSI color codes from help text if terminal doesn't support colors."""
+
+    def _strip_ansi(self, text):
+        """Strip ANSI escape codes from text."""
+        # Match ANSI escape sequences
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+        return ansi_escape.sub("", text)
+
+    def format_help(self):
+        """Format help, stripping colors if stdout is not a TTY."""
+        help_text = super().format_help()
+        # Strip colors if not outputting to a TTY
+        if not sys.stdout.isatty():
+            help_text = self._strip_ansi(help_text)
+        return help_text
 
 
 def get_paths(lines):
@@ -146,7 +164,7 @@ def print_full_lines(paths, lines, use_color):
 
 def main():
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__, formatter_class=ColoredHelpFormatter
     )
     parser.add_argument(
         "file",
