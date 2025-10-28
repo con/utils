@@ -1,0 +1,43 @@
+{
+  "schema": "1.0",
+  "metadata": {
+    "title": "Sample JSON Document",
+    "version": "1.0.0",
+    "authors": [
+      {
+        "name": "John Doe",
+        "role": "developer"
+      },
+      {
+        "name": "Jane Smith",
+        "role": "designer"
+      }
+    ]
+  },
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "properties": {
+          "color": "red",
+          "size": "large",
+          "target_field": "important_value"
+        }
+      },
+      {
+        "id": 2,
+        "properties": {
+          "color": "blue",
+          "size": "small"
+        }
+      }
+    ],
+    "settings": {
+      "enabled": true,
+      "options": {
+        "feature_a": true,
+        "feature_b": false
+      }
+    }
+  }
+}

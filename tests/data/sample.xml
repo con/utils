@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <metadata>
+    <title>Sample Document</title>
+    <authors>
+      <author>
+        <name>John Doe</name>
+        <email>john@example.com</email>
+      </author>
+      <author>
+        <name>Jane Smith</name>
+        <email>jane@example.com</email>
+      </author>
+    </authors>
+  </metadata>
+  <content>
+    <section id="intro">
+      <heading>Introduction</heading>
+      <paragraph>This is the introduction.</paragraph>
+    </section>
+    <section id="methods">
+      <heading>Methods</heading>
+      <paragraph>This is the methods section.</paragraph>
+      <subsection>
+        <heading>Data Collection</heading>
+        <paragraph>Important data collection info here.</paragraph>
+        <target_element>find_this_element</target_element>
+      </subsection>
+    </section>
+  </content>
+</root>
