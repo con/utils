@@ -507,3 +507,164 @@ def test_show_paths_regex_case_sensitive():
     assert result_lower.stdout.strip() == ""
     # Correct case should find the class
     assert "MyClass" in result_correct.stdout
+
+
+@pytest.mark.ai_generated
+def test_show_paths_multiple_files():
+    """Test show-paths with multiple files."""
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        str(DATA_DIR / "sample.json"),
+        "-e",
+        "target_field",
+        "--color",
+        "off",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Only sample.json has target_field, so output should have its prefix
+    assert "sample.json:" in output
+    assert "target_field" in output
+    # sample.py has no match, so it shouldn't appear
+    assert "sample.py:" not in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_multiple_files_both_match():
+    """Test show-paths with multiple files where both have matches."""
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        str(DATA_DIR / "sample.xml"),
+        "-e",
+        "target",
+        "--color",
+        "off",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Both files have "target" somewhere
+    assert "sample.py:" in output
+    assert "sample.xml:" in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_multiple_files_auto_prefix():
+    """Test that auto mode adds filename prefix for multiple files."""
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        str(DATA_DIR / "sample.json"),
+        "-e",
+        "def",
+        "--color",
+        "off",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Auto mode with multiple files should prefix with filename
+    for line in output.strip().split("\n"):
+        assert "sample.py:" in line
+
+
+@pytest.mark.ai_generated
+def test_show_paths_single_file_auto_no_prefix():
+    """Test that auto mode does NOT add filename prefix for single file."""
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        "-e",
+        "def",
+        "--color",
+        "off",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Auto mode with single file: no filename prefix
+    for line in output.strip().split("\n"):
+        assert not line.startswith("sample.py:")
+
+
+@pytest.mark.ai_generated
+def test_show_paths_filename_prefix_single_file():
+    """Test --filename=prefix forces prefix even with single file."""
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        "-e",
+        "find_me",
+        "--color",
+        "off",
+        "--filename",
+        "prefix",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    assert "sample.py:" in output
+    assert "find_me" in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_filename_name_mode():
+    """Test --filename=name prints filename header before hits."""
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        str(DATA_DIR / "sample.json"),
+        "-e",
+        "target",
+        "--color",
+        "off",
+        "--filename",
+        "name",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    lines = output.strip().split("\n")
+    # Should have filename as standalone header line
+    py_path = str(DATA_DIR / "sample.py")
+    json_path = str(DATA_DIR / "sample.json")
+    assert py_path in lines
+    assert json_path in lines
+    # After each header, lines should NOT have filename prefix
+    # Find the line after the header
+    py_idx = lines.index(py_path)
+    assert ":" in lines[py_idx + 1]  # line number format
+    assert not lines[py_idx + 1].startswith(py_path + ":")
+
+
+@pytest.mark.ai_generated
+def test_show_paths_filename_name_skips_no_hits():
+    """Test --filename=name does not print header for files with no hits."""
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        str(DATA_DIR / "sample.json"),
+        "-e",
+        "target_field",
+        "--color",
+        "off",
+        "--filename",
+        "name",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Only sample.json has target_field
+    assert str(DATA_DIR / "sample.json") in output
+    assert str(DATA_DIR / "sample.py") not in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_multiple_files_full_lines():
+    """Test multiple files with full-lines format and prefix."""
+    result = run_show_paths(
+        str(DATA_DIR / "sample.json"),
+        str(DATA_DIR / "sample.xml"),
+        "-e",
+        "target",
+        "-f",
+        "full-lines",
+        "--color",
+        "off",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Both context lines and match lines should have the prefix
+    json_lines = [l for l in output.split("\n") if l.startswith(str(DATA_DIR / "sample.json:"))]
+    xml_lines = [l for l in output.split("\n") if l.startswith(str(DATA_DIR / "sample.xml:"))]
+    assert len(json_lines) > 0
+    assert len(xml_lines) > 0

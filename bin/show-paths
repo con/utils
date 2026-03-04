@@ -136,7 +136,7 @@ def get_paths(lines):
     return paths
 
 
-def print_inline(paths, lines, use_color):
+def print_inline(paths, lines, use_color, prefix=""):
     """Print paths and matched lines in inline format."""
     for line_num, path in paths:
         path_str = ".".join([p[0] for p in path[:-1]])
@@ -144,10 +144,10 @@ def print_inline(paths, lines, use_color):
         if use_color:
             path_str = colored(path_str, attrs=["dark"])
             line = colored(line, "red")
-        print(f"{line_num}: {path_str} {line}")
+        print(f"{prefix}{line_num}: {path_str} {line}")
 
 
-def print_full_lines(paths, lines, use_color):
+def print_full_lines(paths, lines, use_color, prefix=""):
     """Print paths and matched lines in full-lines format."""
     printed = set()
     for line_num, path in paths:
@@ -155,11 +155,31 @@ def print_full_lines(paths, lines, use_color):
         for key, indent, i in path[:-1]:
             line_colored = colored(lines[i], attrs=["dark"]) if use_color else lines[i]
             if i not in printed:
-                print(f"{i}  {line_colored}")
+                print(f"{prefix}{i}  {line_colored}")
                 printed.add(i)
         line_colored = colored(lines[line_num], "red") if use_color else lines[line_num]
-        print(f"{line_num}: {line_colored}")
+        print(f"{prefix}{line_num}: {line_colored}")
         printed.add(line_num)
+
+
+def filter_paths(lines, regex=None, line_numbers=None):
+    """Get and filter indentation-based paths for given lines."""
+    paths = get_paths(lines)
+
+    if regex:
+        paths = [
+            (line_num, path)
+            for line_num, path in paths
+            if regex.search(lines[line_num])
+        ]
+
+    if line_numbers:
+        nums = set(line_numbers)
+        paths = [
+            (line_num, path) for line_num, path in paths if line_num in nums
+        ]
+
+    return paths
 
 
 def main():
@@ -168,10 +188,8 @@ def main():
     )
     parser.add_argument(
         "file",
-        nargs="?",
-        type=argparse.FileType("r"),
-        default=sys.stdin,
-        help="Input file to process (default: stdin)",
+        nargs="*",
+        help="Input file(s) to process (default: stdin)",
     )
     parser.add_argument(
         "-e", "--regex", type=str, help="Regular expression to match lines"
@@ -196,6 +214,13 @@ def main():
         default="auto",
         help="Color output: 'auto' (default), 'on', or 'off'",
     )
+    parser.add_argument(
+        "--filename",
+        choices=["auto", "prefix", "name"],
+        default="auto",
+        help="How to annotate output with filename: 'auto' (prefix when multiple files),"
+        " 'prefix' (prepend filename: to each line), 'name' (print filename header)",
+    )
 
     args = parser.parse_args()
 
@@ -209,36 +234,40 @@ def main():
     # Compile regex if provided
     regex = re.compile(args.regex) if args.regex else None
 
-    # Read lines from the file
-    lines = args.file.readlines()
-    lines = [line.rstrip() for line in lines]
+    # Determine file list: use provided files or stdin
+    files = args.file if args.file else [None]  # None means stdin
 
-    # Get paths for all lines
-    paths = get_paths(lines)
+    # Resolve filename display mode
+    filename_mode = args.filename
+    if filename_mode == "auto":
+        filename_mode = "prefix" if len(files) > 1 else None
 
-    # Filter by regex if provided
-    if args.regex:
-        regex = re.compile(args.regex)
-        paths = [
-            (line_num, path)
-            for line_num, path in paths
-            if regex.search(lines[line_num])
-        ]
+    for filepath in files:
+        if filepath is None:
+            lines = sys.stdin.readlines()
+            fname = "<stdin>"
+        else:
+            with open(filepath) as f:
+                lines = f.readlines()
+            fname = filepath
 
-    # Filter by line numbers if provided
-    if args.line_number:
-        line_numbers = set(args.line_number)
-        paths = [
-            (line_num, path) for line_num, path in paths if line_num in line_numbers
-        ]
+        lines = [line.rstrip() for line in lines]
 
-    # Print based on the chosen format
-    if args.format == "inline":
-        print_inline(paths, lines, use_color)
-    elif args.format == "full-lines":
-        print_full_lines(paths, lines, use_color)
-    else:
-        raise ValueError(args.format)
+        paths = filter_paths(lines, regex=regex, line_numbers=args.line_number)
+        if not paths:
+            continue
+
+        prefix = f"{fname}:" if filename_mode == "prefix" else ""
+
+        if filename_mode == "name":
+            print(fname)
+
+        if args.format == "inline":
+            print_inline(paths, lines, use_color, prefix=prefix)
+        elif args.format == "full-lines":
+            print_full_lines(paths, lines, use_color, prefix=prefix)
+        else:
+            raise ValueError(args.format)
 
 
 if __name__ == "__main__":
