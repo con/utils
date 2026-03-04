@@ -2,9 +2,10 @@
 """Tests for show-paths utility."""
 
 import os
+from pathlib import Path
+import re
 import subprocess
 import sys
-from pathlib import Path
 
 import pytest
 
@@ -206,7 +207,9 @@ def test_show_paths_help_output():
         lines = help_output.split("\n")
         # Find lines that look like shell prompts from examples
         example_lines = [
-            line for line in lines if line.strip().startswith("❯") or "show-paths" in line
+            line
+            for line in lines
+            if line.strip().startswith("❯") or "show-paths" in line
         ]
         # If examples are present, there should be some
         if example_lines:
@@ -223,7 +226,9 @@ def test_show_paths_help_colors_stripped_without_tty():
     help_output = result.stdout
 
     # Since we're running in subprocess (no TTY), ANSI codes should be stripped
-    assert "\x1b[" not in help_output, "ANSI color codes should be stripped from help without TTY"
+    assert (
+        "\x1b[" not in help_output
+    ), "ANSI color codes should be stripped from help without TTY"
 
     # But the content should still be there
     assert "RepetitionTime" in help_output or "relatedIdentifier" in help_output
@@ -250,7 +255,7 @@ def test_show_paths_color_on():
     """Test that --color=on adds ANSI color codes to output."""
     # Force termcolor to produce colors even without TTY
     env = os.environ.copy()
-    env['FORCE_COLOR'] = '1'
+    env["FORCE_COLOR"] = "1"
 
     result = run_show_paths(
         str(DATA_DIR / "sample.py"),
@@ -275,7 +280,7 @@ def test_show_paths_color_on_full_lines():
     """Test that --color=on works with full-lines format."""
     # Force termcolor to produce colors even without TTY
     env = os.environ.copy()
-    env['FORCE_COLOR'] = '1'
+    env["FORCE_COLOR"] = "1"
 
     result = run_show_paths(
         str(DATA_DIR / "sample.json"),
@@ -664,7 +669,244 @@ def test_show_paths_multiple_files_full_lines():
     assert result.returncode == 0
     output = result.stdout
     # Both context lines and match lines should have the prefix
-    json_lines = [l for l in output.split("\n") if l.startswith(str(DATA_DIR / "sample.json:"))]
-    xml_lines = [l for l in output.split("\n") if l.startswith(str(DATA_DIR / "sample.xml:"))]
+    json_lines = [
+        line
+        for line in output.split("\n")
+        if line.startswith(str(DATA_DIR / "sample.json:"))
+    ]
+    xml_lines = [
+        line
+        for line in output.split("\n")
+        if line.startswith(str(DATA_DIR / "sample.xml:"))
+    ]
     assert len(json_lines) > 0
     assert len(xml_lines) > 0
+
+
+# --- Tests for -D/--decorations option ---
+
+FAKE_BLOB_BASE = "https://github.com/owner/repo/blob/abc123"
+FAKE_TOPLEVEL = "/fake/repo"
+FAKE_SHA = "abc123"
+
+
+def run_show_paths_with_mock_git(*args, input_data=None):
+    """Run show-paths with get_github_context patched to return fake context.
+
+    We read the script, compile it as a module, patch get_github_context,
+    then call main().
+    """
+    show_paths_path = str(SHOW_PATHS)
+    wrapper = "\n".join(
+        [
+            "import sys",
+            f"sys.argv = {['show-paths'] + list(args)!r}",
+            "import types",
+            "mod = types.ModuleType('show_paths')",
+            f"mod.__file__ = {show_paths_path!r}",
+            f"with open({show_paths_path!r}) as f:",
+            f"    code = compile(f.read(), {show_paths_path!r}, 'exec')",
+            "exec(code, mod.__dict__)",
+            "mod.get_github_context = lambda: "
+            f"({FAKE_TOPLEVEL!r}, {FAKE_SHA!r}, {FAKE_BLOB_BASE!r})",
+            "mod.main()",
+        ]
+    )
+    cmd = [sys.executable, "-c", wrapper]
+    env = os.environ.copy()
+    result = subprocess.run(
+        cmd,
+        input=input_data,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    return result
+
+
+@pytest.mark.ai_generated
+def test_show_paths_decorations_none():
+    """Test that --decorations=none produces no ANSI codes."""
+    env = os.environ.copy()
+    env["FORCE_COLOR"] = "1"
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        "-e",
+        "find_me",
+        "-D",
+        "none",
+        env=env,
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    assert "find_me" in output
+    # No ANSI codes should be present
+    assert "\x1b[" not in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_decorations_color():
+    """Test that --decorations=color forces ANSI codes even without TTY."""
+    env = os.environ.copy()
+    env["FORCE_COLOR"] = "1"
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        "-e",
+        "find_me",
+        "-D",
+        "color",
+        env=env,
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    assert "find_me" in output
+    assert "\x1b[" in output, "Color codes should be present with --decorations=color"
+
+
+@pytest.mark.ai_generated
+def test_show_paths_github_markdown_inline():
+    """Test that github-markdown inline output contains markdown link syntax."""
+    result = run_show_paths_with_mock_git(
+        str(DATA_DIR / "sample.py"),
+        "-e",
+        "find_me",
+        "-D",
+        "github-markdown",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Should contain markdown link syntax [...](...#L...)
+    assert re.search(
+        r"\*\*\[`\d+:`\]\(.+#L\d+\)", output
+    ), f"Expected bold markdown link syntax in output: {output}"
+    assert FAKE_BLOB_BASE in output
+    assert "find_me" in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_github_markdown_full_lines():
+    """Test that github-markdown full-lines output has links for both context and match lines."""
+    result = run_show_paths_with_mock_git(
+        str(DATA_DIR / "sample.py"),
+        "-e",
+        "find_me",
+        "-f",
+        "full-lines",
+        "-D",
+        "github-markdown",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    lines = output.strip().split("\n")
+    # Should have multiple lines (context + match)
+    assert len(lines) > 1
+
+    # Context lines should have link syntax with space after number (no colon)
+    context_links = [ln for ln in lines if re.search(r"\[`\d+ `\]\(.+#L\d+\)", ln)]
+    assert len(context_links) > 0, f"Expected context line links in output: {output}"
+
+    # Match lines should have link syntax with colon after number
+    match_links = [ln for ln in lines if re.search(r"\*\*\[`\d+:`\]\(.+#L\d+\)", ln)]
+    assert len(match_links) > 0, f"Expected match line links in output: {output}"
+
+
+@pytest.mark.ai_generated
+def test_show_paths_github_markdown_multiple_files():
+    """Test that github-markdown produces different blob URLs per file."""
+    result = run_show_paths_with_mock_git(
+        str(DATA_DIR / "sample.py"),
+        str(DATA_DIR / "sample.xml"),
+        "-e",
+        "target",
+        "-D",
+        "github-markdown",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Both files should have blob URLs with their respective paths
+    assert "sample.py" in output
+    assert "sample.xml" in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_github_markdown_line_numbers():
+    """Test that GitHub line numbers are 1-indexed (tool's 0-indexed + 1)."""
+    result = run_show_paths_with_mock_git(
+        str(DATA_DIR / "sample.py"),
+        "-n",
+        "0",
+        "-D",
+        "github-markdown",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Line 0 in the tool should link to #L1 on GitHub
+    assert "#L1)" in output, f"Expected #L1 for line 0 in output: {output}"
+    # Should show `0:` as the display number
+    assert "`0:`" in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_decorations_backward_compat():
+    """Test that --color off still works when --decorations is not set (auto)."""
+    env = os.environ.copy()
+    env["FORCE_COLOR"] = "1"
+    result = run_show_paths(
+        str(DATA_DIR / "sample.py"),
+        "-e",
+        "find_me",
+        "--color",
+        "off",
+        env=env,
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    assert "find_me" in output
+    # --color off should suppress colors even with FORCE_COLOR set
+    assert "\x1b[" not in output
+
+
+@pytest.mark.ai_generated
+def test_show_paths_github_markdown_filename_prefix_linked():
+    """Test that filename prefix in github-markdown mode is a hyperlink."""
+    result = run_show_paths_with_mock_git(
+        str(DATA_DIR / "sample.py"),
+        str(DATA_DIR / "sample.xml"),
+        "-e",
+        "target",
+        "-D",
+        "github-markdown",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    # Filename prefix should be a markdown link with backticks
+    assert re.search(
+        r"\[`[^`]*sample\.py`\]\(" + re.escape(FAKE_BLOB_BASE), output
+    ), f"Expected linked filename prefix for sample.py: {output}"
+
+
+@pytest.mark.ai_generated
+def test_show_paths_github_markdown_filename_name_linked():
+    """Test that filename header in github-markdown name mode is a hyperlink."""
+    result = run_show_paths_with_mock_git(
+        str(DATA_DIR / "sample.py"),
+        str(DATA_DIR / "sample.xml"),
+        "-e",
+        "target",
+        "--filename",
+        "name",
+        "-D",
+        "github-markdown",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    lines = output.strip().split("\n")
+    # Header lines should be linked filenames
+    header_lines = [
+        ln
+        for ln in lines
+        if ln.startswith("[`") and "sample.py" in ln and "#L" not in ln
+    ]
+    assert (
+        len(header_lines) > 0
+    ), f"Expected linked filename header for sample.py: {output}"
