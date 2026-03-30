@@ -910,3 +910,60 @@ def test_show_paths_github_markdown_filename_name_linked():
     assert (
         len(header_lines) > 0
     ), f"Expected linked filename header for sample.py: {output}"
+
+
+@pytest.mark.ai_generated
+def test_show_paths_blank_lines_preserve_context():
+    """Test that blank lines do not destroy the indentation path stack.
+
+    Blank lines have zero indentation which previously caused the path
+    stack to be wiped, losing class/function context.
+    """
+    result = run_show_paths(
+        str(DATA_DIR / "sample_multiline.py"),
+        "-e",
+        "put_object",
+        "-f",
+        "full-lines",
+        "--color",
+        "off",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    lines = output.strip().split("\n")
+    texts = [line.split(maxsplit=1)[1] if " " in line else "" for line in lines]
+    # The class definition must appear in the context — blank line inside
+    # the docstring must not wipe it from the stack.
+    assert any("class Storage" in t for t in texts), (
+        f"class definition missing from context:\n{output}"
+    )
+
+
+@pytest.mark.ai_generated
+def test_show_paths_continuation_lines_preserve_context():
+    """Test that closing-paren continuation lines do not replace the def.
+
+    A multi-line function signature like:
+        def upload(
+            self,
+        ) -> str:
+    has ') -> str:' at the same indent as 'def upload('. The closing
+    paren line must not replace the def in the path stack.
+    """
+    result = run_show_paths(
+        str(DATA_DIR / "sample_multiline.py"),
+        "-e",
+        "put_object",
+        "-f",
+        "full-lines",
+        "--color",
+        "off",
+    )
+    assert result.returncode == 0
+    output = result.stdout
+    lines = output.strip().split("\n")
+    texts = [line.split(maxsplit=1)[1] if " " in line else "" for line in lines]
+    # The def line must appear, not ') -> str:'
+    assert any("def upload" in t for t in texts), (
+        f"def line missing from context (replaced by continuation?):\n{output}"
+    )

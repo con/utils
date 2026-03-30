@@ -194,14 +194,30 @@ def get_paths(lines):
 
     for i, line in enumerate(lines):
         stripped = line.lstrip()
+
+        # Skip blank lines — they have indent 0 which would
+        # incorrectly pop the entire path stack
+        if not stripped:
+            paths.append((i, tuple(path_stack)))
+            continue
+
         indent = len(line) - len(stripped)
 
+        # Lines starting with closing brackets/parens or commas are
+        # continuations of a previous statement — they should not
+        # replace the current entry at the same indent level.
+        is_continuation = stripped[0] in ")]},"
+
         # Adjust the stack based on indentation
-        while path_stack and path_stack[-1][1] >= indent:
-            path_stack.pop()
+        if is_continuation:
+            while path_stack and path_stack[-1][1] > indent:
+                path_stack.pop()
+        else:
+            while path_stack and path_stack[-1][1] >= indent:
+                path_stack.pop()
 
         # Extract the "key" (first non-space word before :, {, etc.)
-        if stripped:
+        if not is_continuation:
             key = stripped.split()[0].rstrip(":{")
             if key:
                 path_stack.append((key, indent, i))
